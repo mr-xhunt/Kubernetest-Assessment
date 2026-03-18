@@ -4,6 +4,7 @@
 
 > **Drop this tool onto any compromised pod and run a full automated assessment of the entire cluster.**
 > Zero external dependencies — pure Python 3 stdlib only.
+</div>
 
 <div align="center">
 
