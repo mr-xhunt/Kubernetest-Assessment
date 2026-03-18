@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 ╔═══════════════════════════════════════════════════════════════╗
-║   KubeXHunt — Kubernetes Security Assessment Tool            ║
-║   Automated cluster security testing from a compromised pod  ║
+║   KubeXHunt — Kubernetes Security Assessment Tool             ║
+║   Automated cluster security testing from a compromised pod   ║
 ║                                                               ║
-║   Author  : Mayank Choubey                                   ║
-║   Version : 1.0.0                                            ║
-║   Usage   : python3 kubexhunt.py [--phase N] [--fast]        ║
-║             [--output FILE] [--no-color] [--kubectl-only]    ║
+║   Author  : Mayank Choubey                                    ║
+║   Version : 1.0.0                                             ║
+║   Usage   : python3 kubexhunt.py [--phase N] [--fast]         ║
+║             [--output FILE] [--no-color] [--kubectl-only]     ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
@@ -54,20 +54,20 @@ def sev(level):
 
 def banner():
     print(c(C.RED, """
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║"""))
+╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                                                                ║"""))
     print(c(C.RED,"║") + c(C.BOLD+C.WHITE,"   ██╗  ██╗██╗   ██╗██████╗ ███████╗██╗  ██╗██╗  ██╗██╗   ██╗███╗   ██╗████████╗   ") + c(C.RED,"║"))
     print(c(C.RED,"║") + c(C.WHITE,"   ██║ ██╔╝██║   ██║██╔══██╗██╔════╝╚██╗██╔╝██║  ██║██║   ██║████╗  ██║╚══██╔══╝   ") + c(C.RED,"║"))
     print(c(C.RED,"║") + c(C.CYAN, "   █████╔╝ ██║   ██║██████╔╝█████╗   ╚███╔╝ ███████║██║   ██║██╔██╗ ██║   ██║      ") + c(C.RED,"║"))
     print(c(C.RED,"║") + c(C.WHITE,"   ██╔═██╗ ██║   ██║██╔══██╗██╔══╝   ██╔██╗ ██╔══██║██║   ██║██║╚██╗██║   ██║      ") + c(C.RED,"║"))
     print(c(C.RED,"║") + c(C.CYAN, "   ██║  ██╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗██║  ██║╚██████╔╝██║ ╚████║   ██║      ") + c(C.RED,"║"))
     print(c(C.RED,"║") + c(C.WHITE,"   ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝      ") + c(C.RED,"║"))
-    print(c(C.RED, """║                                                                   ║
-║         Kubernetes Security Assessment Tool  v1.0.0              ║
-║         Starting from a Compromised Pod → Full Cluster Audit     ║
-║                                                                   ║
-║         Author: Mayank Choubey                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+    print(c(C.RED, """║                                                                                                                          ║
+║         Kubernetes Security Assessment Tool  v1.0.0                                                                                            ║
+║         Starting from a Compromised Pod → Full Cluster Audit                                                                                   ║
+║                                                                                                                                                ║
+║         Author: Mayank Choubey                                                                                                                 ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 """))
 
 def phase_header(num, name, desc):
