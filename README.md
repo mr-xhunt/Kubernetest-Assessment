@@ -2,6 +2,9 @@
 
 ## 🛠️ KubeXHunt — Automated Assessment Tool
 
+>KubeXHunt is an open-source Kubernetes security assessment tool designed to help security engineers and penetration testers evaluate the security posture of Kubernetes clusters from an attacker’s perspective.
+>KubeXHunt enumerates Kubernetes resources, analyzes configurations, and reports the results in a clear pass/fail format, allowing security teams to quickly identify weaknesses and demonstrate real-world impact without causing destructive changes to the cluster.
+
 > **Drop this tool onto any compromised pod and run a full automated assessment of the entire cluster.**
 > Zero external dependencies — pure Python 3 stdlib only.
 </div>
