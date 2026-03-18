@@ -6,6 +6,13 @@
 > Zero external dependencies — pure Python 3 stdlib only.
 </div>
 
+> [!IMPORTANT]
+> **Starting Point:** You have Remote Code Execution (RCE) inside a compromised pod.
+> All commands are executed **from inside that pod** unless stated otherwise.
+> **Philosophy:** Demonstrate impact without destroying — read, enumerate, prove, document.
+
+---
+
 <div align="center">
 
 [![Tool](https://img.shields.io/badge/Tool-KubeXHunt-red?style=for-the-badge&logo=python)](.)
@@ -144,13 +151,6 @@ curl -s https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py 
 > KubeXHunt installs `kubectl` automatically on the pod if it is not already present.
 > All checks are **read-only** by default — creation tests (pods, bindings) are immediately
 > cleaned up after proving permissions. The tool never modifies workloads or RBAC permanently.
----
-
-> [!IMPORTANT]
-> **Starting Point:** You have Remote Code Execution (RCE) inside a compromised pod.
-> All commands are executed **from inside that pod** unless stated otherwise.
-> **Philosophy:** Demonstrate impact without destroying — read, enumerate, prove, document.
-
 ---
 
 <div align="center">
