@@ -6,6 +6,12 @@
 > Zero external dependencies — pure Python 3 stdlib only.
 </div>
 
+---
+
+> Credits to **[Chandrapal Badshah](https://github.com/0xbadshah)** for providing exceptional training on Kubernetes Security, which significantly contributed to the development of this tool and deepened my understanding of Kubernetes security practices.
+
+---
+
 > [!IMPORTANT]
 > **Starting Point:** You have Remote Code Execution (RCE) inside a compromised pod.
 > All commands are executed **from inside that pod** unless stated otherwise.
