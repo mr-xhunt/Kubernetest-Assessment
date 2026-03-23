@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KubeXHunt Security Report</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#c9d1d9;--accent:#58a6ff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',monospace;padding:20px}
+  h1{color:#f44;font-size:2em;margin-bottom:5px}
+  h2{color:var(--accent);margin:20px 0 10px}
+  .meta{color:#8b949e;font-size:.9em;margin-bottom:20px}
+  .summary{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;min-width:120px;text-align:center}
+  .card .count{font-size:2.5em;font-weight:700}
+  .card .label{font-size:.85em;color:#8b949e}
+  .finding{background:var(--card);border:1px solid var(--border);border-radius:6px;margin:8px 0;padding:12px 16px}
+  .finding-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .severity{color:#fff;font-size:.75em;padding:2px 8px;border-radius:4px;font-weight:700}
+  .detail{font-size:.85em;color:#8b949e;margin:4px 0;white-space:pre-wrap}
+  .remediation{font-size:.83em;color:#3fb950;margin-top:6px}
+  details{margin:12px 0}
+  summary.phase-header{background:var(--card);padding:10px 14px;border-radius:6px;cursor:pointer;color:var(--accent);font-weight:700;list-style:none;border:1px solid var(--border)}
+  .attack-path{background:var(--card);border:1px solid #f44;border-radius:8px;padding:16px;margin:12px 0}
+  .node{background:#21262d;border-radius:6px;padding:8px 14px;display:inline-block;margin:4px 0;color:#f0f6fc}
+  .arrow{color:#8b949e;margin:4px 14px;font-size:.9em}
+  .via{color:#fa0;font-style:italic}
+  svg.gauge{display:block;margin:10px auto}
+</style>
+</head>
+<body>
+<h1>🔴 KubeXHunt Security Assessment Report</h1>
+<div class="meta">
+  Generated: 2026-03-19 18:39:18 |
+  Cluster: https://10.100.0.1:443 |
+  Namespace: web |
+  SA: phoenix-sa |
+  Cloud: AWS |
+  K8s: v1.35.2-eks-f69f56f
+</div>
+
+<div class="summary">
+  <div class="card"><div class="count" style="color:#f44">23</div><div class="label">CRITICAL</div></div>
+  <div class="card"><div class="count" style="color:#fa0">22</div><div class="label">HIGH</div></div>
+  <div class="card"><div class="count" style="color:#ffd700">8</div><div class="label">MEDIUM</div></div>
+  <div class="card"><div class="count" style="color:#58a6ff">2</div><div class="label">LOW</div></div>
+  <div class="card"><div class="count" style="color:#3fb950">28</div><div class="label">PASS</div></div>
+  <div class="card"><div class="count" style="color:#fff">55</div><div class="label">TOTAL ISSUES</div></div>
+</div>
+
+<h2 style='color:#f44'>⚔ Attack Paths</h2><div class='attack-path'><h3 style='color:#f44'>Attack Path #1</h3><div class='node'>Compromised Pod</div><div class='arrow'>↓ <span class='via'>core_pattern write → host code exec</span></div><div class='node'>Node Root</div></div><div class='attack-path'><h3 style='color:#f44'>Attack Path #2</h3><div class='node'>AWS IAM Role</div><div class='arrow'>↓ <span class='via'>Role eks-node-group-role → aws sts get-caller-identity</span></div><div class='node'>Cloud Account Compromise</div></div><div class='attack-path'><h3 style='color:#f44'>Attack Path #3</h3><div class='node'>SA Token</div><div class='arrow'>↓ <span class='via'>list secrets in web</span></div><div class='node'>Namespace Secrets</div></div><div class='attack-path'><h3 style='color:#f44'>Attack Path #4</h3><div class='node'>Node Access</div><div class='arrow'>↓ <span class='via'>Kubelet cert → system:node impersonation</span></div><div class='node'>API Server</div></div><div class='attack-path'><h3 style='color:#f44'>Attack Path #5</h3><div class='node'>Stolen Token kube-system/aws-node</div><div class='arrow'>↓ <span class='via'>Permissions: nodes, namespaces</span></div><div class='node'>Elevated Access</div></div>
+
+<h2>📋 All Findings</h2>
+<details open><summary class='phase-header'>Phase 0</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>SA token present</strong>
+          </div>
+          <div class='detail'>Namespace: web | SA: phoenix-sa | Expires: 2026-03-20 18:24:28<br>Audience: ['https://kubernetes.default.svc']</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>CA cert mounted</strong>
+          </div>
+          <div class='detail'>/var/run/secrets/kubernetes.io/serviceaccount/ca.crt — usable for API MITM awareness</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Kubernetes API reachable</strong>
+          </div>
+          <div class='detail'>https://10.100.0.1:443</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Cloud provider: AWS</strong>
+          </div>
+          <div class='detail'>Provider-specific checks will activate in later phases</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 1</summary>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Elevated capabilities detected</strong>
+          </div>
+          <div class='detail'>CapEff: 000001ffffffffff — check for NET_RAW, SYS_ADMIN, SYS_PTRACE</div>
+          <div class="remediation">⚑ Drop all caps; add back only required ones</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Seccomp disabled — all ~400 syscalls available</strong>
+          </div>
+          <div class='detail'>Seccomp: 0</div>
+          <div class="remediation">⚑ Set seccompProfile.type: RuntimeDefault</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>AppArmor unconfined</strong>
+          </div>
+          <div class='detail'>Profile: system_u:system_r:unconfined_service_t:s0</div>
+          <div class="remediation">⚑ Apply AppArmor RuntimeDefault or custom profile</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>Root filesystem is writable</strong>
+          </div>
+          <div class='detail'></div>
+          <div class="remediation">⚑ Set readOnlyRootFilesystem: true</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>core_pattern is writable — privileged escape possible</strong>
+          </div>
+          <div class='detail'>Current: |/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h<br>Write pipe handler → code executes on host</div>
+          <div class="remediation">⚑ Remove SYS_ADMIN / privileged flag</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Block devices accessible in /dev</strong>
+          </div>
+          <div class='detail'>Devices: /dev/nvme0n1p128, /dev/nvme0n1p127, /dev/nvme0n1p1, /dev/nvme0n1, /dev/loop7<br>Raw disk read → exfiltrate host data</div>
+          <div class="remediation">⚑ Remove hostPath /dev mount | Drop SYS_RAWIO</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Host filesystem at /host</strong>
+          </div>
+          <div class='detail'>Read /etc/shadow, kubelet certs, SSH keys, pod tokens</div>
+          <div class="remediation">⚑ Remove hostPath volumes</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>hostPID: true — host PID namespace visible</strong>
+          </div>
+          <div class='detail'>PID 1: systemd (node init system)</div>
+          <div class="remediation">⚑ Remove hostPID: true</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>hostNetwork: true — kubelet reachable on localhost</strong>
+          </div>
+          <div class='detail'>Ports: 10250</div>
+          <div class="remediation">⚑ Remove hostNetwork: true</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Runtime socket exposed: /host/run/containerd/containerd.sock</strong>
+          </div>
+          <div class='detail'>Create privileged containers, exec into any pod, list all workloads</div>
+          <div class="remediation">⚑ Never mount runtime sockets into application pods</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Container runtime: containerd</strong>
+          </div>
+          <div class='detail'>Escape feasibility depends on runtime</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 2</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>IMDSv1 blocked</strong>
+          </div>
+          <div class='detail'>IMDSv2 required</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>AWS IAM credentials stolen via IMDSv2</strong>
+          </div>
+          <div class='detail'>Role: eks-node-group-role | KeyId: ASIA3NHICLH5KPBB... | Expires: 2026-03-20T01:00:44Z<br>export AWS_ACCESS_KEY_ID=ASIA3NHICLH5KPBBQVRV AWS_SECRET_ACCESS_KEY=... AWS_SESSION_TOKEN=...</div>
+          <div class="remediation">⚑ Block 169.254.169.254/32 via NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No IRSA token</strong>
+          </div>
+          <div class='detail'>AWS_ROLE_ARN not set</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 3</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Anonymous API test: HTTP 401</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Impersonation rejected (403)</strong>
+          </div>
+          <div class='detail'>SA cannot impersonate system:admin</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>TokenRequest not permitted</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Can list secrets in 'web' (1 secrets)</strong>
+          </div>
+          <div class='detail'>Secrets: harbor-secret</div>
+          <div class="remediation">⚑ Set automountServiceAccountToken: false | Restrict SA permissions</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Secret readable: harbor-secret</strong>
+          </div>
+          <div class='detail'>.dockerconfigjson: {"auths":{"harbor.mxhunt.in":{"username":"admin","password":</div>
+          <div class="remediation">⚑ Restrict RBAC — remove get/list on secrets</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot list nodes</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Can read events (2 total)</strong>
+          </div>
+          <div class='detail'>No immediate credential leakage in events</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 4</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Auto-injected 2 service endpoint(s)</strong>
+          </div>
+          <div class='detail'>phoenix-app: 10.100.229.66:80<br>kubernetes: 10.100.0.1:443</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Cannot list NetworkPolicies (HTTP 403)</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>DNS resolved 1 internal service(s)</strong>
+          </div>
+          <div class='detail'>payment-api.payments → 10.100.229.65</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>SRV records resolved: 1 hidden services</strong>
+          </div>
+          <div class='detail'>_https._tcp.kubernetes.default.svc.cluster.local → ['10.100.0.1']</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Internal service reachable: http://10.100.229.66:80</strong>
+          </div>
+          <div class='detail'>HTTP 200 |  <!DOCTYPE html> <html lang="en"> <head>     <meta charset="UTF-8">     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <ti...</div>
+          <div class="remediation">⚑ Apply Istio mTLS + AuthorizationPolicy or NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Internal service reachable: http://10.100.229.65:8080/</strong>
+          </div>
+          <div class='detail'>HTTP 200 | {"endpoints":["/health","/transactions","/customers"],"service":"payment-api","version":"1.0.0","warning":"INTERNAL SERVICE - NOT FOR EXTERNAL USE"} <br>⚠ Sensitive keywords in response!</div>
+          <div class="remediation">⚑ Apply Istio mTLS + AuthorizationPolicy or NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Internal service reachable: http://10.100.229.65:8080/health</strong>
+          </div>
+          <div class='detail'>HTTP 200 | {"status":"healthy"} </div>
+          <div class="remediation">⚑ Apply Istio mTLS + AuthorizationPolicy or NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Internal service reachable: http://10.100.229.65:8080/transactions</strong>
+          </div>
+          <div class='detail'>HTTP 200 | {"total_count":5,"transactions":[{"amount":1299.99,"card_brand":"visa","card_last4":"4242","created_at":"2026-02-10T14:30:00Z","currency":"USD","custo...<br>⚠ Sensitive keywords in response!</div>
+          <div class="remediation">⚑ Apply Istio mTLS + AuthorizationPolicy or NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Internal service reachable: http://10.100.229.65:8080/customers</strong>
+          </div>
+          <div class='detail'>HTTP 200 | {"customers":[{"card_brand":"visa","card_exp_month":12,"card_exp_year":2028,"card_last4":"4242","card_token":"tok_visa_4242","created_at":"2025-06-15T...<br>⚠ Sensitive keywords in response!</div>
+          <div class="remediation">⚑ Apply Istio mTLS + AuthorizationPolicy or NetworkPolicy</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>Open ports on internal services: 1</strong>
+          </div>
+          <div class='detail'>10.100.229.65:8080</div>
+          <div class="remediation">⚑ Apply NetworkPolicy to restrict inter-pod traffic</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>No service mesh sidecars detected</strong>
+          </div>
+          <div class='detail'>Pod-to-pod traffic likely unencrypted</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>NET_RAW — traffic sniffing possible via raw sockets</strong>
+          </div>
+          <div class='detail'>Can capture plain-text HTTP traffic between pods</div>
+          <div class="remediation">⚑ Drop NET_RAW | Enable Istio mTLS</div>
+        </div></details><details open><summary class='phase-header'>Phase 5</summary>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>nsenter escape possible: hostPID=true + privileged=true</strong>
+          </div>
+          <div class='detail'>nsenter -t 1 -m -u -i -n -p -- /bin/bash<br>→ Full root shell on node</div>
+          <div class="remediation">⚑ Remove hostPID: true | Set privileged: false | Drop all caps</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>chroot escape via hostPath at /host</strong>
+          </div>
+          <div class='detail'>chroot /host /bin/bash → node root</div>
+          <div class="remediation">⚑ Remove hostPath volumes | Enable PSS Restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>cgroup v1 release_agent not accessible</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>User namespace unshare allowed — potential privilege escalation</strong>
+          </div>
+          <div class='detail'>unshare --user --map-root-user id → uid=0(root) gid=0(root) groups=0(root)</div>
+          <div class="remediation">⚑ Disable user namespace creation: kernel.unprivileged_userns_clone=0</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>containerd (hostPath) socket at /host/run/containerd/containerd.sock</strong>
+          </div>
+          <div class='detail'>Create privileged containers, exec into any container, snapshot filesystems</div>
+          <div class="remediation">⚑ Never mount runtime sockets into application pods</div>
+        </div></details><details open><summary class='phase-header'>Phase 6</summary>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Kubelet PKI accessible: /host/var/lib/kubelet/pki</strong>
+          </div>
+          <div class='detail'>Files: kubelet-server-2026-03-19-16-48-02.pem, kubelet-server-current.pem<br>system:node:<name> role → impersonate kubelet to API server</div>
+          <div class="remediation">⚑ Remove hostPath mounts | PSS Restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Found 6 SA token(s) from other pods</strong>
+          </div>
+          <div class='detail'>kube-system/aws-node — /host/var/lib/kubelet/pods/3240f2be-67ac-4826-b459-900dcee4f27c/volumes/kubernetes.io~projected/kube-api-access-s92ql/..2026_03_19_18_12_10.1871871209/token<br>kube-system/kube-proxy — /host/var/lib/kubelet/pods/b3922c70-29fe-444d-8d49-17ad7e43efd4/volumes/kubernetes.io~projected/kube-api-access-xbcv5/..2026_03_19_18_12_50.3095151436/token<br>argocd/argocd-applicationset-controlle</div>
+          <div class="remediation">⚑ Remove hostPath mounts | PSS Restricted blocks hostPath: /</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Stolen token kube-system/aws-node has elevated permissions</strong>
+          </div>
+          <div class='detail'>Token: /host/var/lib/kubelet/pods/3240f2be-67ac-4826-b459-900dcee4f27c/volumes/kubernetes.io~projected/kube-api-access-s92ql/..2026_03_19_18_12_10.1871871209/token<br>Allowed: nodes, namespaces</div>
+          <div class="remediation">⚑ PSS Restricted + no hostPath</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Stolen token kube-system/kube-proxy has elevated permissions</strong>
+          </div>
+          <div class='detail'>Token: /host/var/lib/kubelet/pods/b3922c70-29fe-444d-8d49-17ad7e43efd4/volumes/kubernetes.io~projected/kube-api-access-xbcv5/..2026_03_19_18_12_50.3095151436/token<br>Allowed: nodes</div>
+          <div class="remediation">⚑ PSS Restricted + no hostPath</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Stolen token argocd/argocd-applicationset-controller has elevated permissions</strong>
+          </div>
+          <div class='detail'>Token: /host/var/lib/kubelet/pods/fa129dd8-4005-4e35-8cb5-4c0abe603e66/volumes/kubernetes.io~projected/kube-api-access-l5rcs/..2026_03_19_18_15_12.2188404398/token<br>Allowed: secrets</div>
+          <div class="remediation">⚑ PSS Restricted + no hostPath</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Sensitive file: Kubelet kubeconfig (alt)</strong>
+          </div>
+          <div class='detail'>Path: /host/var/lib/kubelet/kubeconfig<br>Preview: --- apiVersion: v1 </div>
+          <div class="remediation">⚑ Remove hostPath mounts | Apply PSS Restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Sensitive file: Node /etc/shadow</strong>
+          </div>
+          <div class='detail'>Path: /host/etc/shadow<br>Preview: root:*LOCK*:14600:::::: bin:*:19387:0:99999:7::: </div>
+          <div class="remediation">⚑ Remove hostPath mounts | Apply PSS Restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Sensitive file: Root SSH authorized keys</strong>
+          </div>
+          <div class='detail'>Path: /host/root/.ssh/authorized_keys<br>Preview: </div>
+          <div class="remediation">⚑ Remove hostPath mounts | Apply PSS Restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Additional CA cert accessible: /host/etc/kubernetes/pki/ca.crt</strong>
+          </div>
+          <div class='detail'>Combined with node PKI → possible API server MITM</div>
+          <div class="remediation">⚑ Remove hostPath CA cert mounts</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Standard SA CA cert present</strong>
+          </div>
+          <div class='detail'>Normal — used for TLS verification | Not exploitable alone</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 7</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot create pods in 'web'</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot create ClusterRoleBindings</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 8</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot create SAs in kube-system</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot create DaemonSets in kube-system</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot create CronJobs in 'web'</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 9</summary>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>No image signing admission webhook</strong>
+          </div>
+          <div class='detail'>Unsigned/tampered images can be deployed without verification</div>
+          <div class="remediation">⚑ Install Kyverno + verifyImages | Use cosign to sign all images</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Registry creds in secret 'harbor-secret'</strong>
+          </div>
+          <div class='detail'>Registry: harbor.mxhunt.in | User: admin</div>
+          <div class="remediation">⚑ Restrict secret read | Rotate registry credentials</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Registry 'harbor.mxhunt.in' authenticated — catalog accessible</strong>
+          </div>
+          <div class='detail'>Secret: harbor-secret | Endpoint: /v2/_catalog<br>Response: {"repositories":["k8s-lab/checkout","k8s-lab/payment-api","k8s-lab/phoenix"]} <br>Can pull/push images — supply chain backdoor possible</div>
+          <div class="remediation">⚑ Rotate registry credentials immediately | Restrict imagePullSecret access</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>No PSS labels on 'web'</strong>
+          </div>
+          <div class='detail'>No Pod Security Standards enforcement</div>
+          <div class="remediation">⚑ kubectl label namespace --overwrite pod-security.kubernetes.io/enforce=restricted</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Kyverno CRD not present</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 10</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>aws-auth not accessible</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No IRSA token</strong>
+          </div>
+          <div class='detail'>AWS_ROLE_ARN not set</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>AWS account enumerated</strong>
+          </div>
+          <div class='detail'>Account: 784318224890 | Region: ap-south-1<br>aws eks list-clusters --region ap-south-1</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 11</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Not GKE — GKE checks skipped</strong>
+          </div>
+          <div class='detail'>Detected: AWS</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 12</summary>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>No runtime security tooling in kube-system</strong>
+          </div>
+          <div class='detail'>No Tetragon, Falco, or similar — post-exploitation goes undetected</div>
+          <div class="remediation">⚑ Install Tetragon (eBPF enforcement) + Falco (alerting)</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Tetragon CRD not present</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Exec from /tmp ALLOWED</strong>
+          </div>
+          <div class='detail'>Ran binary from /tmp (rc=0) — crypto miners/malware can execute</div>
+          <div class="remediation">⚑ Apply Tetragon TracingPolicy: block-exec-from-tmp</div>
+        </div></details><details open><summary class='phase-header'>Phase 13</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No obvious credentials in env vars</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>Mounted secret files: 2</strong>
+          </div>
+          <div class='detail'>/var/run/secrets/kubernetes.io/serviceaccount/token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImI4ZWQ3NzQzMWFmM2Y3M2I1OTgyNDFkOGE5ZDRjNDEzM2U0Yzgy...<br>/run/secrets/: Contains: kubernetes.io</div>
+          <div class="remediation">⚑ Audit mounted files | Rotate exposed credentials</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No hardcoded credentials in common config locations</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 14</summary>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>No ResourceQuota in 'web'</strong>
+          </div>
+          <div class='detail'>Unlimited pod/CPU/memory creation — DoS via resource exhaustion</div>
+          <div class="remediation">⚑ Apply ResourceQuota to all workload namespaces</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #1565c0'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#1565c0'>LOW</span>
+            <strong>No LimitRange in 'web'</strong>
+          </div>
+          <div class='detail'>Pods without explicit limits get unlimited resources</div>
+          <div class="remediation">⚑ Apply LimitRange with default CPU/memory requests and limits</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #1565c0'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#1565c0'>LOW</span>
+            <strong>Kubernetes audit logging not detected</strong>
+          </div>
+          <div class='detail'>Attacker activity leaves no forensic trail</div>
+          <div class="remediation">⚑ Enable --audit-log-path on API server | For EKS: enable CloudWatch audit logs</div>
+        </div></details><details open><summary class='phase-header'>Phase 15</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Kubernetes version: v1.35.2-eks-f69f56f</strong>
+          </div>
+          <div class='detail'>Checking against known CVEs...</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>CVE-2020-8554: Man-in-the-middle via ExternalIP service</strong>
+          </div>
+          <div class='detail'>Affected: all versions (design issue, mitigation via admission)<br>Cluster: v1.35.2-eks-f69f56f</div>
+          <div class="remediation">⚑ Apply mitigation for CVE-2020-8554 — no K8s version fix exists</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>CVE-2024-21626: runc Leaky Vessels /proc/self/fd escape</strong>
+          </div>
+          <div class='detail'>Affected: runc < 1.1.12 (all K8s versions using affected runc)<br>Cluster: v1.35.2-eks-f69f56f</div>
+          <div class="remediation">⚑ Apply mitigation for CVE-2024-21626 — no K8s version fix exists</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Kernel version: 6.12.68-92.122.amzn2023.x86_64</strong>
+          </div>
+          <div class='detail'>OS: Linux | Linux CVE checks: enabled</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No kernel CVEs apply to 6.12.68-92.122.amzn2023.x86_64</strong>
+          </div>
+          <div class='detail'>Parsed version (6, 12, 68) — above all affected ranges in database</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Node IPs discovered via fallback: 2</strong>
+          </div>
+          <div class='detail'>IPs: 192.168.80.250, 192.168.73.168<br>Source: kubectl get nodes / kubelet config / /proc/net/fib_trie / hostname -I</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Cannot read cluster-wide events</strong>
+          </div>
+          <div class='detail'>HTTP 403</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 16</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Kubelet port 10255 not reachable at 192.168.80.250</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Kubelet 10250 at 192.168.80.250: HTTP 0</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Kubelet port 10255 not reachable at 192.168.73.168</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Kubelet 10250 at 192.168.73.168: HTTP 0</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 17</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>etcd port 2379 not reachable at 192.168.80.250</strong>
+          </div>
+          <div class='detail'>Filtered or not exposed</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>etcd port 2379 not reachable at 192.168.73.168</strong>
+          </div>
+          <div class='detail'>Filtered or not exposed</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 18</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No credential files found in application directories</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 19</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>No credentials in current process environ</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Credentials harvested from other processes in same pod</strong>
+          </div>
+          <div class='detail'>PID 5417 (tini): REDIS_PASSWORD=Muiga6DhMB3ztdbf<br>PID 5430 (argocd-server): REDIS_PASSWORD=Muiga6DhMB3ztdbf</div>
+          <div class="remediation">⚑ Remove env var credentials | Use mounted secrets at file level</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Credentials harvested from HOST processes via hostPID</strong>
+          </div>
+          <div class='detail'>PID 5417 (tini): REDIS_PASSWORD=Muiga6DhMB3ztdbf<br>PID 5430 (argocd-server): REDIS_PASSWORD=Muiga6DhMB3ztdbf</div>
+          <div class="remediation">⚑ Remove hostPID: true | Never run privileged pods</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Sensitive host processes visible via hostPID</strong>
+          </div>
+          <div class='detail'>Processes: 2751:containerd,2795:kubelet,2957:containerd-shim,3286:containerd-shim,3360:kube-proxy,4993:containerd-shim,5072:containerd-shim,5174:containerd-shim</div>
+          <div class="remediation">⚑ Remove hostPID: true from pod spec</div>
+        </div></details><details open><summary class='phase-header'>Phase 20</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Not Azure — AKS checks skipped</strong>
+          </div>
+          <div class='detail'>Detected: AWS</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 21</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Current SCC: system_u:system_r:unconfined_service_t:s0</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 22</summary>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>SA token audience correctly scoped</strong>
+          </div>
+          <div class='detail'>aud: ['https://kubernetes.default.svc']</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>NET_ADMIN capability — DNS poisoning possible</strong>
+          </div>
+          <div class='detail'>Pod can modify routing tables, run DHCP server, intercept DNS<br>Can respond to DNS queries faster than CoreDNS → redirect traffic</div>
+          <div class="remediation">⚑ Drop NET_ADMIN capability | Enable Istio mTLS</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>NET_RAW capability — raw packet injection possible</strong>
+          </div>
+          <div class='detail'>Can forge ARP responses, inject raw packets, sniff traffic</div>
+          <div class="remediation">⚑ Drop NET_RAW capability | Apply NetworkPolicy + mTLS</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Token has namespace-scoped secret access</strong>
+          </div>
+          <div class='detail'>Limited to: web</div>
+          <div class="remediation">⚑ Remove secret read from SA RBAC if not required</div>
+        </div></details><details open><summary class='phase-header'>Phase 23</summary>
+        <div class='finding' style='border-left:4px solid #c62828'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#c62828'>CRITICAL</span>
+            <strong>Attack Chain COMPLETE: Pod RCE → Cloud Account Compromise</strong>
+          </div>
+          <div class='detail'>Path: Pod RCE → SA Token → AWS IMDS → IAM Credentials → Full Cloud Access<br>Similar to Tesla Kubernetes breach (2018) — cryptomining on cloud account<br>Mitigations needed at every step of this chain</div>
+          <div class="remediation">⚑ Block IMDS | Remove cloud-platform scope | Restrict SA token</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Chain 2: Privileged pod creation blocked</strong>
+          </div>
+          <div class='detail'>PSS or RBAC restricting pod create</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Chain 3: Token theft chain blocked</strong>
+          </div>
+          <div class='detail'>No stolen tokens with wildcard RBAC</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #2e7d32'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#2e7d32'>PASS</span>
+            <strong>Chain 4: No webhook bypass path identified</strong>
+          </div>
+          <div class='detail'></div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 24</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Silent checks (no audit log entry)</strong>
+          </div>
+          <div class='detail'>File reads (/proc, /sys, /var/run/secrets)<br>Environment variable inspection<br>Local port probing (socket.connect)<br>DNS resolution<br>Container capability checks<br>Filesystem write test</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>Logged API calls (appear in audit logs — LOW risk detection)</strong>
+          </div>
+          <div class='detail'>GET /api/v1/* — all list/get operations<br>POST /apis/authorization.k8s.io/v1/selfsubjectrulesreviews<br>POST /apis/authorization.k8s.io/v1/selfsubjectaccessreviews<br>GET /version, /api, /apis</div>
+          <div class="remediation">⚑ Use --stealth 1 to add jitter and kubectl User-Agent</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #e65100'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#e65100'>HIGH</span>
+            <strong>Mutating API calls (most detectable — use --no-mutate in production)</strong>
+          </div>
+          <div class='detail'>POST /api/v1/namespaces/{ns}/pods — test pod creation<br>POST /apis/rbac.../clusterrolebindings — test CRB creation<br>DELETE — cleanup of created resources<br>POST /api/v1/namespaces/{ns}/serviceaccounts — in kube-system</div>
+          <div class="remediation">⚑ Use --no-mutate flag | Only run mutating checks in authorized assessments</div>
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>No runtime detection — this scan was NOT detected by any runtime tool</strong>
+          </div>
+          <div class='detail'>Tetragon, Falco, Sysdig not present<br>All API calls, file reads, and probes went undetected</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>Running in stealth level 0 (default)</strong>
+          </div>
+          <div class='detail'>All checks run at full speed | Python urllib User-Agent | No jitter<br>Re-run with --stealth 1 or --stealth 2 for lower detection profile</div>
+          
+        </div></details><details open><summary class='phase-header'>Phase 25</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>CNI not detected from pod</strong>
+          </div>
+          <div class='detail'>Filesystem not exposing CNI config</div>
+          
+        </div>
+        <div class='finding' style='border-left:4px solid #f57c00'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#f57c00'>MEDIUM</span>
+            <strong>'default' SA has automountServiceAccountToken not explicitly false</strong>
+          </div>
+          <div class='detail'>Pods using default SA inherit token mounting</div>
+          <div class="remediation">⚑ kubectl patch sa default -p '{"automountServiceAccountToken":false}'</div>
+        </div></details><details open><summary class='phase-header'>Phase 26</summary>
+        <div class='finding' style='border-left:4px solid #00838f'>
+          <div class='finding-header'>
+            <span class='severity' style='background:#00838f'>INFO</span>
+            <strong>No previous scan provided for diff</strong>
+          </div>
+          <div class='detail'>Use --diff previous.json to compare</div>
+          
+        </div></details>
+
+<div style="margin-top:40px;color:#8b949e;font-size:.8em;text-align:center">
+  KubeXHunt v1.2.0 | Author: Mayank Choubey | For authorized security assessments only
+</div>
+</body>
+</html>
