@@ -2681,7 +2681,7 @@ def phase_dos():
                         f"Or: aws logs describe-log-groups --region {region} "
                         f"--log-group-name-prefix /aws/eks\n"
                         f"Enable via: aws eks update-cluster-config --name <cluster> "
-                        f"--logging '{{"clusterLogging":[{{"types":["audit"],"enabled":true}}]}}'",
+                        f"--logging '{{\"clusterLogging\":[{{\"types\":[\"audit\"],\"enabled\":true}}]}}'",
                         "Enable EKS audit logging in CloudWatch")
                 audit_found = True
             else:
@@ -4079,21 +4079,40 @@ def phase_attack_chains():
     section("Chain 3: SA Token Theft → Cluster Admin Takeover")
     stolen_tokens = [f for f in FINDINGS if "stolen token" in f["check"].lower() and
                      f["severity"] == "CRITICAL"]
-    wildcard_rbac = any("wildcard rbac" in f["check"].lower() for f in FINDINGS
-                        if f["severity"] == "CRITICAL")
+    # Check TOKEN_SCORES for any stolen token that can list secrets cluster-wide
+    # or has a score >= 60 (secrets access) — these are the real escalation paths
+    high_priv_stolen = [ts for ts in TOKEN_SCORES
+                        if "stolen" in ts["label"].lower() and ts["score"] >= 60]
+    # Also check for findings where stolen token was confirmed to have broad access
+    stolen_secrets_access = any(
+        ("stolen token" in f["check"].lower() or "stolen" in f["check"].lower()) and
+        ("secret" in f["detail"].lower() or "elevated" in f["check"].lower()) and
+        f["severity"] == "CRITICAL"
+        for f in FINDINGS)
+    wildcard_rbac = any(
+        "wildcard" in f["check"].lower() or
+        "cluster-admin" in f["detail"].lower() or
+        "wildcard rbac" in f["check"].lower()
+        for f in FINDINGS if f["severity"] == "CRITICAL")
+
     if stolen_tokens:
-        info_line("✓ Step 1: SA tokens stolen from /var/lib/kubelet/pods")
-    if wildcard_rbac:
-        info_line("✓ Step 2: Wildcard RBAC on one of the tokens")
+        info_line(f"✓ Step 1: {len(stolen_tokens)} SA token(s) stolen from /var/lib/kubelet/pods")
+    if high_priv_stolen:
+        info_line(f"✓ Step 2: High-privilege stolen token found: {high_priv_stolen[0]['label']} (score {high_priv_stolen[0]['score']}/100)")
+
+    if stolen_tokens and (wildcard_rbac or high_priv_stolen or stolen_secrets_access):
+        best = high_priv_stolen[0]["label"] if high_priv_stolen else "stolen token"
+        info_line("✓ Step 3: Token has sufficient privileges for cluster-admin escalation")
         finding("CRITICAL","Attack Chain COMPLETE: Token Theft → Cluster Admin",
-                "Path: hostPath mount → steal SA tokens → find wildcard RBAC token → cluster-admin\n"
-                "→ Create backdoor ClusterRoleBinding → permanent access even after token rotation\n"
+                f"Path: hostPath mount → steal SA tokens → {best} has elevated RBAC\n"
+                "→ List/read all secrets cluster-wide → steal credentials → create backdoor CRB\n"
                 "Similar to real-world K8s cluster takeovers",
-                "Remove hostPath | PSS Restricted | No wildcard RBAC | Audit token permissions")
+                "Remove hostPath | PSS Restricted | Audit all SA token permissions")
         add_attack_edge("Node Access","Permanent Cluster Admin",
-                        "Token theft → wildcard RBAC → backdoor CRB","CRITICAL")
+                        f"Token theft ({best}) → elevated RBAC → cluster takeover","CRITICAL")
     else:
-        finding("PASS","Chain 3: Token theft chain blocked","No stolen tokens with wildcard RBAC")
+        finding("PASS","Chain 3: Token theft chain blocked",
+                "No stolen tokens with elevated RBAC found")
 
     section("Chain 4: Webhook Bypass → Policy Bypass → Node Escape")
     webhook_bypass = any("ignore" in f["check"].lower() and "unreachable" in f["detail"].lower()
