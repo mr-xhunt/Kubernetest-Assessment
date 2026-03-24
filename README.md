@@ -1,6 +1,6 @@
 <div align="center">
 
-> ## 🛠️ KubeXHunt — Post-Compromise Kubernetes Attack Simulation Framework
+ ## 🛠️ KubeXHunt — Post-Compromise Kubernetes Attack Simulation Framework
 
 > KubeXHunt is an open-source **post-compromise Kubernetes security assessment framework** designed to simulate real-world attacker behavior from inside a compromised pod.
 >
